@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>File Zipper</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #f7f7f7;
+      margin: 0;
+      padding: 0;
+    }
+    .container {
+      max-width: 600px;
+      margin: 0 auto;
+      padding: 20px;
+      background-color: #fff;
+      border-radius: 5px;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    }
+    h1 {
+      text-align: center;
+      color: #333;
+    }
+    p {
+      text-align: center;
+      color: #777;
+    }
+    input[type="file"] {
+      display: none;
+    }
+    .upload-btn {
+      display: block;
+      width: 100%;
+      padding: 10px;
+      background-color: #007bff;
+      color: #fff;
+      text-decoration: none;
+      border-radius: 5px;
+      cursor: pointer;
+      transition: background-color 0.3s;
+    }
+    .upload-btn:hover {
+      background-color: #0056b3;
+    }
+    .output {
+      margin-top: 20px;
+      padding: 10px;
+      border: 1px solid #ccc;
+      border-radius: 5px;
+      background-color: #f7f7f7;
+    }
+    .output ul {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+    }
+    .output li {
+      margin-bottom: 5px;
+    }
+    .output a {
+      display: block;
+      padding: 5px 10px;
+      background-color: #28a745;
+      color: #fff;
+      text-decoration: none;
+      border-radius: 5px;
+      cursor: pointer;
+      transition: background-color 0.3s;
+    }
+    .output a:hover {
+      background-color: #218838;
+    }
+    .download-btn {
+      display: block;
+      width: 100%;
+      margin-top: 20px;
+      padding: 10px;
+      background-color: #dc3545;
+      color: #fff;
+      text-decoration: none;
+      border-radius: 5px;
+      cursor: pointer;
+      transition: background-color 0.3s;
+    }
+    .download-btn:hover {
+      background-color: #c82333;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>File Zipper</h1>
+    <p>Select files to zip and click "Zip Files" to create a ZIP archive.</p>
+
+    <label for="files" class="upload-btn">Select Files</label>
+    <input type="file" id="files" multiple>
+
+    <div class="output" id="output"></div>
+
+    <button id="zipBtn" disabled>Zip Files</button>
+
+    <a id="downloadLink" class="download-btn" style="display: none;">Download Zip</a>
+  </div>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.7.1/jszip.min.js"></script>
+  <script>
+    document.getElementById('files').addEventListener('change', function(e) {
+      var files = e.target.files;
+      var output = document.getElementById('output');
+      output.innerHTML = '';
+
+      var fileList = document.createElement('ul');
+
+      for (var i = 0; i < files.length; i++) {
+        var file = files[i];
+        var listItem = document.createElement('li');
+        var link = document.createElement('a');
+        link.href = URL.createObjectURL(file);
+        link.innerText = file.name;
+        listItem.appendChild(link);
+        fileList.appendChild(listItem);
+      }
+
+      output.appendChild(fileList);
+
+      var zipBtn = document.getElementById('zipBtn');
+      zipBtn.removeAttribute('disabled');
+    });
+
+    document.getElementById('zipBtn').addEventListener('click', function() {
+      var zip = new JSZip();
+      var output = document.getElementById('output');
+      var fileElements = output.getElementsByTagName('a');
+
+      var zipFilename = 'files.zip';
+      var count = 0;
+
+      function addFileToZip(fileElement) {
+        var fileUrl = fileElement.href;
+        var fileName = fileElement.innerText;
+
+        fetch(fileUrl)
+          .then(response => response.blob())
+          .then(blob => {
+            zip.file(fileName, blob);
+            count++;
+            if (count === fileElements.length) {
+              zip.generateAsync({ type: 'blob' })
+                .then(function(content) {
+                  var downloadLink = document.getElementById('downloadLink');
+                  downloadLink.href = URL.createObjectURL(content);
+                  downloadLink.download = zipFilename;
+                  downloadLink.style.display = 'block';
+                });
+            }
+          });
+      }
+
+      for (var i = 0; i < fileElements.length; i++) {
+        var fileElement = fileElements[i];
+        addFileToZip(fileElement);
+      }
+    });
+  </script>
+</body>
+</html>
